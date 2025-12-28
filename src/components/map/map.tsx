@@ -21,7 +21,7 @@ const currentCustomIcon = leaflet.icon({
 });
 
 function Map({ offers, selectedOffer }: MapProps): JSX.Element {
-  const mapRef = useRef(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
   const map = useRef<leaflet.Map | null>(null);
 
   useEffect(() => {
@@ -63,7 +63,9 @@ function Map({ offers, selectedOffer }: MapProps): JSX.Element {
   }, [offers]);
 
   useEffect(() => {
-    if (map.current) {
+    let isMounted = true;
+
+    if (map.current && isMounted) {
       const markers: leaflet.Marker[] = [];
 
       offers.forEach((offer) => {
@@ -83,9 +85,14 @@ function Map({ offers, selectedOffer }: MapProps): JSX.Element {
       });
 
       return () => {
+        isMounted = false;
         markers.forEach((marker) => marker.remove());
       };
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [offers, selectedOffer]);
 
   return <div style={{ height: '100%' }} ref={mapRef}></div>;

@@ -9,6 +9,10 @@ type SortOptionsProps = {
 function SortOptions({ currentSort, onSortChange }: SortOptionsProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleToggleOpen = () => {
+    setIsOpen((prev) => !prev);
+  };
+
   const handleSortClick = (sortType: SortType) => {
     onSortChange(sortType);
     setIsOpen(false);
@@ -20,7 +24,7 @@ function SortOptions({ currentSort, onSortChange }: SortOptionsProps): JSX.Eleme
       <span
         className="places__sorting-type"
         tabIndex={0}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggleOpen}
       >
         {currentSort}
         <svg className="places__sorting-arrow" width={7} height={4}>
