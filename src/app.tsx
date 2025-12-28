@@ -9,7 +9,7 @@ import LoginPage from './pages/login-page/login-page';
 import FavoritesPage from './pages/favorites-page/favorites-page';
 import OfferPage from './pages/offer-page/offer-page';
 import NotFoundPage from './pages/not-found-page/not-found-page';
-import PrivateRoute from './components/private-route/private-route';
+import PrivateRoute from './hocs/private-route/private-route';
 
 function App(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();

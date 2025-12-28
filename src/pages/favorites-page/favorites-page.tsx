@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { RootState, AppDispatch } from '../../store';
-import { fetchFavorites, logout } from '../../store/action';
+import { logout } from '../../store/action';
 import { AuthorizationStatus } from '../../constants/auth';
 import OfferCard from '../../components/offer-card/offer-card';
 import Spinner from '../../components/spinner/spinner';
@@ -13,10 +13,6 @@ function FavoritesPage(): JSX.Element {
   const isLoading = useSelector((state: RootState) => state.favorites.isLoading);
   const authorizationStatus = useSelector((state: RootState) => state.user.authorizationStatus);
   const user = useSelector((state: RootState) => state.user.user);
-
-  useEffect(() => {
-    dispatch(fetchFavorites());
-  }, [dispatch]);
 
   const favoritesByCity = useMemo(() => {
     const grouped: { [city: string]: typeof favorites } = {};
@@ -30,8 +26,8 @@ function FavoritesPage(): JSX.Element {
     return grouped;
   }, [favorites]);
 
-  const handleLogout = (evt: React.MouseEvent<HTMLAnchorElement>) => {
-    evt.preventDefault();
+  const handleLogout = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
     dispatch(logout());
   };
 
@@ -99,9 +95,9 @@ function FavoritesPage(): JSX.Element {
                   <li key={cityName} className="favorites__locations-items">
                     <div className="favorites__locations locations locations--current">
                       <div className="locations__item">
-                        <a className="locations__item-link" href="#">
+                        <span className="locations__item-link">
                           <span>{cityName}</span>
-                        </a>
+                        </span>
                       </div>
                     </div>
                     <div className="favorites__places">

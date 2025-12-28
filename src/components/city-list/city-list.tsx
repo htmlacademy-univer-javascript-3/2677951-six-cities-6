@@ -8,10 +8,10 @@ type CityListProps = {
 
 function CityList({ currentCity, onCityChange }: CityListProps): JSX.Element {
   const handleCityClick = (
-    evt: MouseEvent<HTMLAnchorElement>,
+    event: MouseEvent<HTMLAnchorElement>,
     city: string
   ) => {
-    evt.preventDefault();
+    event.preventDefault();
     onCityChange(city);
   };
 
@@ -26,7 +26,7 @@ function CityList({ currentCity, onCityChange }: CityListProps): JSX.Element {
                   currentCity === city ? 'tabs__item--active' : ''
                 }`}
                 href="#"
-                onClick={(evt) => handleCityClick(evt, city)}
+                onClick={(event) => handleCityClick(event, city)}
               >
                 <span>{city}</span>
               </a>

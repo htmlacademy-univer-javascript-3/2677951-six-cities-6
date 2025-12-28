@@ -3,5 +3,8 @@ export type User = {
   avatarUrl: string;
   isPro: boolean;
   email: string;
+};
+
+export type AuthResponse = User & {
   token: string;
 };

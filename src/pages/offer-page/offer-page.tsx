@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, MouseEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
@@ -7,7 +7,7 @@ import {
   fetchNearbyOffers,
   fetchComments,
   logout,
-  toggleFavorite
+  toggleFavorite,
 } from '../../store/action';
 import { AuthorizationStatus } from '../../constants/auth';
 import ReviewForm from '../../components/review-form/review-form';
@@ -41,18 +41,21 @@ function OfferPage(): JSX.Element {
   );
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchOffer(id))
-        .unwrap()
-        .catch(() => {
-          navigate('/404');
-        });
-      dispatch(fetchNearbyOffers(id));
-      dispatch(fetchComments(id));
+    if (!id) {
+      return;
     }
+
+    dispatch(fetchOffer(id))
+      .unwrap()
+      .catch(() => {
+        navigate('/404');
+      });
+
+    dispatch(fetchNearbyOffers(id));
+    dispatch(fetchComments(id));
   }, [id, dispatch, navigate]);
 
-  const handleFavoriteClick = () => {
+  const handleFavoriteClick = (): void => {
     if (authorizationStatus !== AuthorizationStatus.Auth) {
       navigate('/login');
       return;
@@ -60,8 +63,20 @@ function OfferPage(): JSX.Element {
 
     if (currentOffer) {
       const status = currentOffer.isFavorite ? 0 : 1;
-      dispatch(toggleFavorite({ offerId: currentOffer.id, status }));
+      dispatch(
+        toggleFavorite({
+          offerId: currentOffer.id,
+          status,
+        })
+      );
     }
+  };
+
+  const handleLogoutClick = (
+    event: MouseEvent<HTMLAnchorElement>
+  ): void => {
+    event.preventDefault();
+    dispatch(logout());
   };
 
   if (!currentOffer) {
@@ -86,32 +101,31 @@ function OfferPage(): JSX.Element {
                 />
               </Link>
             </div>
+
             <nav className="header__nav">
               <ul className="header__nav-list">
                 {authorizationStatus === AuthorizationStatus.Auth && user ? (
                   <>
                     <li className="header__nav-item user">
-                      <a
+                      <Link
                         className="header__nav-link header__nav-link--profile"
-                        href="#"
+                        to="/favorites"
                       >
-                        <div className="header__avatar-wrapper user__avatar-wrapper"></div>
+                        <div className="header__avatar-wrapper user__avatar-wrapper" />
                         <span className="header__user-name user__name">
                           {user.email}
                         </span>
                         <span className="header__favorite-count">
                           {favorites.length}
                         </span>
-                      </a>
+                      </Link>
                     </li>
+
                     <li className="header__nav-item">
                       <a
                         className="header__nav-link"
                         href="#"
-                        onClick={(evt) => {
-                          evt.preventDefault();
-                          dispatch(logout());
-                        }}
+                        onClick={handleLogoutClick}
                       >
                         <span className="header__signout">Sign out</span>
                       </a>
@@ -123,7 +137,7 @@ function OfferPage(): JSX.Element {
                       className="header__nav-link header__nav-link--profile"
                       to="/login"
                     >
-                      <div className="header__avatar-wrapper user__avatar-wrapper"></div>
+                      <div className="header__avatar-wrapper user__avatar-wrapper" />
                       <span className="header__login">Sign in</span>
                     </Link>
                   </li>
@@ -138,7 +152,7 @@ function OfferPage(): JSX.Element {
         <section className="offer">
           <div className="offer__gallery-container container">
             <div className="offer__gallery">
-              {(currentOffer.images || []).slice(0, 6).map((image) => (
+              {currentOffer.images?.slice(0, 6).map((image) => (
                 <div key={image} className="offer__image-wrapper">
                   <img
                     className="offer__image"
@@ -152,12 +166,6 @@ function OfferPage(): JSX.Element {
 
           <div className="offer__container container">
             <div className="offer__wrapper">
-              {currentOffer.isPremium && (
-                <div className="offer__mark">
-                  <span>Premium</span>
-                </div>
-              )}
-
               <div className="offer__name-wrapper">
                 <h1 className="offer__name">{currentOffer.title}</h1>
                 <button
@@ -169,101 +177,17 @@ function OfferPage(): JSX.Element {
                   type="button"
                   onClick={handleFavoriteClick}
                 >
-                  <svg
-                    className="offer__bookmark-icon"
-                    width={31}
-                    height={33}
-                  >
-                    <use xlinkHref="#icon-bookmark"></use>
+                  <svg className="offer__bookmark-icon" width={31} height={33}>
+                    <use xlinkHref="#icon-bookmark" />
                   </svg>
                   <span className="visually-hidden">To bookmarks</span>
                 </button>
               </div>
 
-              <div className="offer__rating rating">
-                <div className="offer__stars rating__stars">
-                  <span
-                    style={{
-                      width: `${(currentOffer.rating / 5) * 100}%`
-                    }}
-                  >
-                  </span>
-                  <span className="visually-hidden">Rating</span>
-                </div>
-                <span className="offer__rating-value rating__value">
-                  {currentOffer.rating}
-                </span>
-              </div>
-
-              <ul className="offer__features">
-                <li className="offer__feature offer__feature--entire">
-                  {currentOffer.type}
-                </li>
-                <li className="offer__feature offer__feature--bedrooms">
-                  {currentOffer.bedrooms || 0}{' '}
-                  {currentOffer.bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}
-                </li>
-                <li className="offer__feature offer__feature--adults">
-                  Max {currentOffer.maxAdults || 0}{' '}
-                  {currentOffer.maxAdults === 1 ? 'adult' : 'adults'}
-                </li>
-              </ul>
-
-              <div className="offer__price">
-                <b className="offer__price-value">
-                  &euro;{currentOffer.price}
-                </b>
-                <span className="offer__price-text">&nbsp;night</span>
-              </div>
-
-              <div className="offer__inside">
-                <h2 className="offer__inside-title">What&apos;s inside</h2>
-                <ul className="offer__inside-list">
-                  {(currentOffer.goods || []).map((good) => (
-                    <li key={good} className="offer__inside-item">
-                      {good}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {currentOffer.host && (
-                <div className="offer__host">
-                  <h2 className="offer__host-title">Meet the host</h2>
-                  <div className="offer__host-user user">
-                    <div
-                      className={`offer__avatar-wrapper ${
-                        currentOffer.host.isPro
-                          ? 'offer__avatar-wrapper--pro'
-                          : ''
-                      } user__avatar-wrapper`}
-                    >
-                      <img
-                        className="offer__avatar user__avatar"
-                        src={currentOffer.host.avatarUrl}
-                        width={74}
-                        height={74}
-                        alt="Host avatar"
-                      />
-                    </div>
-                    <span className="offer__user-name">
-                      {currentOffer.host.name}
-                    </span>
-                    {currentOffer.host.isPro && (
-                      <span className="offer__user-status">Pro</span>
-                    )}
-                  </div>
-                  <div className="offer__description">
-                    <p className="offer__text">
-                      {currentOffer.description}
-                    </p>
-                  </div>
-                </div>
-              )}
-
               <ReviewList reviews={comments} />
-              {authorizationStatus === AuthorizationStatus.Auth && (
-                <ReviewForm offerId={id!} />
+
+              {authorizationStatus === AuthorizationStatus.Auth && id && (
+                <ReviewForm offerId={id} />
               )}
             </div>
           </div>

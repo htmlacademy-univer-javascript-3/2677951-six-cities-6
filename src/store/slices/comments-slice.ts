@@ -24,7 +24,7 @@ export const commentsSlice = createSlice({
         state.comments = action.payload;
       })
       .addCase(postComment.fulfilled, (state, action) => {
-        state.comments.push(action.payload);
+        state.comments = action.payload;
       });
   },
 });

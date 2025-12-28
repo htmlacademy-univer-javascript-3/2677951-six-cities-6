@@ -1,14 +1,15 @@
 function Spinner(): JSX.Element {
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontSize: '24px',
-    }}
+    <div
+      data-testid="spinner"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+      }}
     >
-      Loading...
+      <div>Loading...</div>
     </div>
   );
 }

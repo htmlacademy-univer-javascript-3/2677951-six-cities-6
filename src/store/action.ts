@@ -1,67 +1,28 @@
-import { createAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { AxiosInstance } from 'axios';
 import { Offer } from '../types/offer';
-import { User } from '../types/user';
+import { User, AuthResponse } from '../types/user';
 import { Review } from '../types/review';
-import { AuthorizationStatus } from '../constants/auth';
 import { saveToken, dropToken } from '../services/token';
 
-export const changeCity = createAction<string>('city/change');
-export const loadOffers = createAction<Offer[]>('offers/load');
-export const setOffersLoadingStatus = createAction<boolean>('offers/setLoadingStatus');
-export const setAuthorizationStatus =
-  createAction<AuthorizationStatus>('user/setAuthorizationStatus');
-export const setUser = createAction<User | null>('user/setUser');
-export const setCurrentOffer = createAction<Offer | null>('offer/setCurrent');
-export const setNearbyOffers = createAction<Offer[]>('offer/setNearby');
-export const setComments = createAction<Review[]>('comments/set');
+/* ENUMS */
+
+export enum FavoriteStatus {
+  Remove = 0,
+  Add = 1,
+}
+
+/* OFFERS */
 
 export const fetchOffers = createAsyncThunk<
   Offer[],
-  undefined,
+  void,
   { extra: AxiosInstance }
 >(
   'offers/fetch',
   async (_arg, { extra: api }) => {
     const { data } = await api.get<Offer[]>('/offers');
     return data;
-  }
-);
-
-export const checkAuth = createAsyncThunk<
-  User,
-  undefined,
-  { extra: AxiosInstance }
->(
-  'user/checkAuth',
-  async (_arg, { extra: api }) => {
-    const { data } = await api.get<User>('/login');
-    return data;
-  }
-);
-
-export const login = createAsyncThunk<
-  User,
-  { email: string; password: string },
-  { extra: AxiosInstance }
->(
-  'user/login',
-  async ({ email, password }, { extra: api }) => {
-    const { data } = await api.post<User>('/login', { email, password });
-    saveToken(data.token);
-    return data;
-  }
-);
-
-export const logout = createAsyncThunk<
-  void,
-  undefined,
-  { extra: AxiosInstance }
->(
-  'user/logout',
-  async (_arg, { extra: api }) => {
-    await api.delete('/logout');
-    dropToken();
   }
 );
 
@@ -89,6 +50,47 @@ export const fetchNearbyOffers = createAsyncThunk<
   }
 );
 
+/* AUTH */
+
+export const checkAuth = createAsyncThunk<
+  User,
+  void,
+  { extra: AxiosInstance }
+>(
+  'user/checkAuth',
+  async (_arg, { extra: api }) => {
+    const { data } = await api.get<User>('/login');
+    return data;
+  }
+);
+
+export const login = createAsyncThunk<
+  AuthResponse,
+  { email: string; password: string },
+  { extra: AxiosInstance }
+>(
+  'user/login',
+  async ({ email, password }, { extra: api }) => {
+    const { data } = await api.post<AuthResponse>('/login', { email, password });
+    saveToken(data.token);
+    return data;
+  }
+);
+
+export const logout = createAsyncThunk<
+  void,
+  void,
+  { extra: AxiosInstance }
+>(
+  'user/logout',
+  async (_arg, { extra: api }) => {
+    await api.delete('/logout');
+    dropToken();
+  }
+);
+
+/* COMMENTS */
+
 export const fetchComments = createAsyncThunk<
   Review[],
   string,
@@ -102,13 +104,13 @@ export const fetchComments = createAsyncThunk<
 );
 
 export const postComment = createAsyncThunk<
-  Review,
+  Review[],
   { offerId: string; comment: string; rating: number },
   { extra: AxiosInstance }
 >(
   'comments/post',
   async ({ offerId, comment, rating }, { extra: api }) => {
-    const { data } = await api.post<Review>(
+    const { data } = await api.post<Review[]>(
       `/comments/${offerId}`,
       { comment, rating }
     );
@@ -116,9 +118,11 @@ export const postComment = createAsyncThunk<
   }
 );
 
+/* FAVORITES */
+
 export const toggleFavorite = createAsyncThunk<
   Offer,
-  { offerId: string; status: number },
+  { offerId: string; status: FavoriteStatus },
   { extra: AxiosInstance }
 >(
   'favorites/toggle',
@@ -132,7 +136,7 @@ export const toggleFavorite = createAsyncThunk<
 
 export const fetchFavorites = createAsyncThunk<
   Offer[],
-  undefined,
+  void,
   { extra: AxiosInstance }
 >(
   'favorites/fetch',
@@ -141,3 +145,4 @@ export const fetchFavorites = createAsyncThunk<
     return data;
   }
 );
+

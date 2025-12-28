@@ -12,7 +12,7 @@ type OfferCardProps = {
 
 function OfferCard({ offer }: OfferCardProps): JSX.Element {
   const { id, title, type, price, rating, isPremium, isFavorite, previewImage } = offer;
-  const ratingWidth = `${Math.round(rating) * 20}%`;
+  const ratingWidth = `${(rating / 5) * 100}%`;
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();

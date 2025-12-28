@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { Offer } from '../../types/offer';
-import { fetchFavorites, toggleFavorite } from '../action';
+import { fetchFavorites, toggleFavorite, logout } from '../action';
 
 type FavoritesState = {
   favorites: Offer[];
@@ -31,10 +31,17 @@ export const favoritesSlice = createSlice({
       .addCase(toggleFavorite.fulfilled, (state, action) => {
         const offer = action.payload;
         if (offer.isFavorite) {
-          state.favorites.push(offer);
+          const exists = state.favorites.some((f) => f.id === offer.id);
+          if (!exists) {
+            state.favorites.push(offer);
+          }
         } else {
           state.favorites = state.favorites.filter((fav) => fav.id !== offer.id);
         }
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.favorites = [];
+        state.isLoading = false;
       });
   },
 });
