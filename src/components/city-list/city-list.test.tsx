@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import CityList from './city-list';
 
 describe('CityList component', () => {
@@ -20,5 +21,18 @@ describe('CityList component', () => {
 
     const activeLink = container.querySelector('.tabs__item--active');
     expect(activeLink).toBeInTheDocument();
+  });
+
+  it('should call onCityChange when city is clicked', async () => {
+    const mockOnCityChange = vi.fn();
+    const user = userEvent.setup();
+
+    render(<CityList currentCity="Paris" onCityChange={mockOnCityChange} />);
+
+    const cologneButton = screen.getByText('Cologne');
+    await user.click(cologneButton);
+
+    expect(mockOnCityChange).toHaveBeenCalledTimes(1);
+    expect(mockOnCityChange).toHaveBeenCalledWith('Cologne');
   });
 });
