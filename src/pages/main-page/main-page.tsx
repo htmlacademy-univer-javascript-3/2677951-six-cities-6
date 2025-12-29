@@ -1,53 +1,88 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { RootState, AppDispatch } from '../../store';
+import { AppDispatch } from '../../store';
+import { fetchOffers, logout } from '../../store/action';
 import { changeCity } from '../../store/slices/city-slice';
-import { logout } from '../../store/action';
+import {
+  selectCurrentCity,
+  selectOffers,
+  selectIsOffersLoading,
+  selectOffersError,
+  selectAuthorizationStatus,
+  selectUser,
+  selectFavorites
+} from '../../store/selectors';
+import { SortType } from '../../constants/sort';
+import { AuthorizationStatus } from '../../constants/auth';
+import { Link } from 'react-router-dom';
+import CityList from '../../components/city-list/city-list';
 import OfferList from '../../components/offer-list/offer-list';
 import Map from '../../components/map/map';
 import SortOptions from '../../components/sort-options/sort-options';
-import CityList from '../../components/city-list/city-list';
-import Spinner from '../../components/spinner/spinner';
 import MainEmpty from '../../components/main-empty/main-empty';
-import { SortType } from '../../constants/sort';
-import { sortOffers } from '../../utils/sort';
+import Spinner from '../../components/spinner/spinner';
+import ErrorMessage from '../../components/error-message/error-message';
 import { Offer } from '../../types/offer';
-import { AuthorizationStatus } from '../../constants/auth';
 
 function MainPage(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
-  const city = useSelector((state: RootState) => state.city.currentCity);
-  const offers = useSelector((state: RootState) => state.offers.offers);
-  const isOffersLoading = useSelector((state: RootState) => state.offers.isLoading);
-  const authorizationStatus = useSelector((state: RootState) => state.user.authorizationStatus);
-  const user = useSelector((state: RootState) => state.user.user);
-  const favorites = useSelector((state: RootState) => state.favorites.favorites);
+
+  const currentCity = useSelector(selectCurrentCity);
+  const offers = useSelector(selectOffers);
+  const isLoading = useSelector(selectIsOffersLoading);
+  const error = useSelector(selectOffersError);
+  const authorizationStatus = useSelector(selectAuthorizationStatus);
+  const user = useSelector(selectUser);
+  const favorites = useSelector(selectFavorites);
 
   const [currentSort, setCurrentSort] = useState<SortType>(SortType.Popular);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
-  const cityOffers = useMemo(
-    () => offers.filter((offer) => offer.city.name === city),
-    [offers, city]
-  );
-
-  const sortedOffers = useMemo(
-    () => sortOffers(cityOffers, currentSort),
-    [cityOffers, currentSort]
-  );
-
-  const handleCityChange = useCallback((newCity: string) => {
-    dispatch(changeCity(newCity));
+  useEffect(() => {
+    dispatch(fetchOffers());
   }, [dispatch]);
 
-  const handleLogout = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+  const cityOffers = useMemo(
+    () => offers.filter((offer) => offer.city.name === currentCity),
+    [offers, currentCity]
+  );
+
+  const sortedOffers = useMemo(() => {
+    const sorted = [...cityOffers];
+    switch (currentSort) {
+      case SortType.PriceLowToHigh:
+        return sorted.sort((a, b) => a.price - b.price);
+      case SortType.PriceHighToLow:
+        return sorted.sort((a, b) => b.price - a.price);
+      case SortType.TopRatedFirst:
+        return sorted.sort((a, b) => b.rating - a.rating);
+      default:
+        return sorted;
+    }
+  }, [cityOffers, currentSort]);
+
+  const handleCityChange = (city: string) => {
+    dispatch(changeCity(city));
+    setCurrentSort(SortType.Popular);
+    setSelectedOffer(null);
+  };
+
+  const handleSortChange = (sort: SortType) => {
+    setCurrentSort(sort);
+    setSelectedOffer(null);
+  };
+
+  const handleLogout = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     dispatch(logout());
-  }, [dispatch]);
+  };
 
-  if (isOffersLoading) {
+  if (isLoading) {
     return <Spinner />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} />;
   }
 
   return (
@@ -90,29 +125,33 @@ function MainPage(): JSX.Element {
           </div>
         </div>
       </header>
+
       <main className="page__main page__main--index">
         <h1 className="visually-hidden">Cities</h1>
-        <CityList currentCity={city} onCityChange={handleCityChange} />
+        <div className="tabs">
+          <section className="locations container">
+            <CityList currentCity={currentCity} onCityChange={handleCityChange} />
+          </section>
+        </div>
         <div className="cities">
-          {cityOffers.length === 0 ? (
-            <div className="cities__places-container cities__places-container--empty container">
-              <MainEmpty city={city} />
-              <div className="cities__right-section"></div>
-            </div>
-          ) : (
+          {sortedOffers.length > 0 ? (
             <div className="cities__places-container container">
               <section className="cities__places places">
                 <h2 className="visually-hidden">Places</h2>
-                <b className="places__found">{cityOffers.length} places to stay in {city}</b>
-                <SortOptions currentSort={currentSort} onSortChange={setCurrentSort} />
+                <b className="places__found">
+                  {sortedOffers.length} places to stay in {currentCity}
+                </b>
+                <SortOptions currentSort={currentSort} onSortChange={handleSortChange} />
                 <OfferList offers={sortedOffers} onOfferHover={setSelectedOffer} />
               </section>
               <div className="cities__right-section">
                 <section className="cities__map map">
-                  <Map offers={cityOffers} selectedOffer={selectedOffer} />
+                  <Map offers={sortedOffers} selectedOffer={selectedOffer} />
                 </section>
               </div>
             </div>
+          ) : (
+            <MainEmpty city={currentCity} />
           )}
         </div>
       </main>

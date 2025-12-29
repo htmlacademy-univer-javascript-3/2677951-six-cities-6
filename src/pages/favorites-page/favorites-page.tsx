@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { RootState, AppDispatch } from '../../store';
+import { AppDispatch } from '../../store';
 import { logout } from '../../store/action';
+import { selectAuthorizationStatus, selectUser, selectFavorites, selectIsFavoritesLoading, selectFavoritesError } from '../../store/selectors';
 import { AuthorizationStatus } from '../../constants/auth';
 import OfferCard from '../../components/offer-card/offer-card';
 import Spinner from '../../components/spinner/spinner';
+import ErrorMessage from '../../components/error-message/error-message';
 
 function FavoritesPage(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
-  const favorites = useSelector((state: RootState) => state.favorites.favorites);
-  const isLoading = useSelector((state: RootState) => state.favorites.isLoading);
-  const authorizationStatus = useSelector((state: RootState) => state.user.authorizationStatus);
-  const user = useSelector((state: RootState) => state.user.user);
+  const favorites = useSelector(selectFavorites);
+  const isLoading = useSelector(selectIsFavoritesLoading);
+  const error = useSelector(selectFavoritesError);
+  const authorizationStatus = useSelector(selectAuthorizationStatus);
+  const user = useSelector(selectUser);
 
   const favoritesByCity = useMemo(() => {
     const grouped: { [city: string]: typeof favorites } = {};
@@ -33,6 +36,10 @@ function FavoritesPage(): JSX.Element {
 
   if (isLoading) {
     return <Spinner />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} />;
   }
 
   return (

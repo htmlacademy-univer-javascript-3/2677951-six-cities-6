@@ -1,15 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { Offer } from '../../types/offer';
-import { fetchFavorites, toggleFavorite, logout } from '../action';
+import { fetchFavorites, toggleFavorite } from '../action';
 
 type FavoritesState = {
   favorites: Offer[];
   isLoading: boolean;
+  error: string | null;
 };
 
 const initialState: FavoritesState = {
   favorites: [],
   isLoading: false,
+  error: null,
 };
 
 export const favoritesSlice = createSlice({
@@ -20,6 +22,7 @@ export const favoritesSlice = createSlice({
     builder
       .addCase(fetchFavorites.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(fetchFavorites.fulfilled, (state, action) => {
         state.favorites = action.payload;
@@ -27,21 +30,16 @@ export const favoritesSlice = createSlice({
       })
       .addCase(fetchFavorites.rejected, (state) => {
         state.isLoading = false;
+        state.error = 'Failed to load favorites';
       })
       .addCase(toggleFavorite.fulfilled, (state, action) => {
-        const offer = action.payload;
-        if (offer.isFavorite) {
-          const exists = state.favorites.some((f) => f.id === offer.id);
-          if (!exists) {
-            state.favorites.push(offer);
-          }
+        if (action.payload.isFavorite) {
+          state.favorites.push(action.payload);
         } else {
-          state.favorites = state.favorites.filter((fav) => fav.id !== offer.id);
+          state.favorites = state.favorites.filter(
+            (offer) => offer.id !== action.payload.id
+          );
         }
-      })
-      .addCase(logout.fulfilled, (state) => {
-        state.favorites = [];
-        state.isLoading = false;
       });
   },
 });

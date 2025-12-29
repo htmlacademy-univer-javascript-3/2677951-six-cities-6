@@ -12,11 +12,35 @@ const MAX_COMMENT_LENGTH = 300;
 
 function ReviewForm({ offerId }: ReviewFormProps): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rating, setRating] = useState<number>(0);
+  const [comment, setComment] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   const isValid = rating > 0 && comment.length >= MIN_COMMENT_LENGTH && comment.length <= MAX_COMMENT_LENGTH;
+
+  const handleSubmit = (evt: FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    if (!isValid || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    dispatch(postComment({ offerId, comment, rating }))
+      .unwrap()
+      .then(() => {
+        setRating(0);
+        setComment('');
+      })
+      .catch(() => {
+        setError('Failed to submit review. Please try again.');
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
+  };
 
   const handleRatingChange = (evt: ChangeEvent<HTMLInputElement>) => {
     setRating(Number(evt.target.value));
@@ -26,29 +50,11 @@ function ReviewForm({ offerId }: ReviewFormProps): JSX.Element {
     setComment(evt.target.value);
   };
 
-  const handleSubmit = (evt: FormEvent<HTMLFormElement>) => {
-    evt.preventDefault();
-
-    if (!isValid || isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    dispatch(postComment({ offerId, comment, rating }))
-      .unwrap()
-      .then(() => {
-        setRating(0);
-        setComment('');
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
-  };
-
   return (
     <form className="reviews__form form" onSubmit={handleSubmit}>
-      <label className="reviews__label form__label" htmlFor="review">Your review</label>
+      <label className="reviews__label form__label" htmlFor="review">
+        Your review
+      </label>
       <div className="reviews__rating-form form__rating">
         {[5, 4, 3, 2, 1].map((value) => (
           <div key={value}>
@@ -62,9 +68,13 @@ function ReviewForm({ offerId }: ReviewFormProps): JSX.Element {
               onChange={handleRatingChange}
               disabled={isSubmitting}
             />
-            <label htmlFor={`${value}-stars`} className="reviews__rating-label form__rating-label" title="perfect">
+            <label
+              htmlFor={`${value}-stars`}
+              className="reviews__rating-label form__rating-label"
+              title="perfect"
+            >
               <svg className="form__star-image" width={37} height={33}>
-                <use xlinkHref="#icon-star"></use>
+                <use xlinkHref="#icon-star" />
               </svg>
             </label>
           </div>
@@ -81,12 +91,21 @@ function ReviewForm({ offerId }: ReviewFormProps): JSX.Element {
       />
       <div className="reviews__button-wrapper">
         <p className="reviews__help">
-          To submit review please make sure to set <span className="reviews__star">rating</span> and describe your stay with at least <b className="reviews__text-amount">{MIN_COMMENT_LENGTH} characters</b>.
+          To submit review please make sure to set{' '}
+          <span className="reviews__star">rating</span> and describe your stay
+          with at least <b className="reviews__text-amount">{MIN_COMMENT_LENGTH} characters</b>.
         </p>
-        <button className="reviews__submit form__submit button" type="submit" disabled={!isValid || isSubmitting}>
+        <button
+          className="reviews__submit form__submit button"
+          type="submit"
+          disabled={!isValid || isSubmitting}
+        >
           Submit
         </button>
       </div>
+      {error && (
+        <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>
+      )}
     </form>
   );
 }

@@ -7,12 +7,12 @@ const createMockUser = (): User => ({
   name: 'Test User',
   avatarUrl: 'avatar.jpg',
   isPro: false,
-  email: 'test@test.com'
+  email: 'test@test.com',
 });
 
 const createMockAuthResponse = (): AuthResponse => ({
   ...createMockUser(),
-  token: 'secret-token'
+  token: 'secret-token',
 });
 
 describe('userSlice', () => {
@@ -41,6 +41,20 @@ describe('userSlice', () => {
   it('should set NoAuth status on logout.fulfilled', () => {
     const initialState = { authorizationStatus: AuthorizationStatus.Auth, user: createMockUser() };
     const state = userReducer(initialState, logout.fulfilled(undefined, '', undefined));
+    expect(state.authorizationStatus).toBe(AuthorizationStatus.NoAuth);
+    expect(state.user).toBeNull();
+  });
+
+  it('should set NoAuth status on checkAuth.rejected', () => {
+    const initialState = { authorizationStatus: AuthorizationStatus.Unknown, user: null };
+    const state = userReducer(initialState, checkAuth.rejected(null, '', undefined));
+    expect(state.authorizationStatus).toBe(AuthorizationStatus.NoAuth);
+    expect(state.user).toBeNull();
+  });
+
+  it('should set NoAuth status on login.rejected', () => {
+    const initialState = { authorizationStatus: AuthorizationStatus.Unknown, user: null };
+    const state = userReducer(initialState, login.rejected(null, '', { email: '', password: '' }));
     expect(state.authorizationStatus).toBe(AuthorizationStatus.NoAuth);
     expect(state.user).toBeNull();
   });

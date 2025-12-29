@@ -2,12 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureMockStore } from '@jedmao/redux-mock-store';
+import thunk from 'redux-thunk';
 import MainPage from './pages/main-page/main-page';
 import LoginPage from './pages/login-page/login-page';
 import NotFoundPage from './pages/not-found-page/not-found-page';
 import { AuthorizationStatus } from './constants/auth';
 
-const mockStore = configureMockStore();
+const middlewares = [thunk];
+const mockStore = configureMockStore(middlewares);
 
 describe('Application Routing', () => {
   it('should render MainPage when navigate to "/"', () => {
@@ -50,12 +52,19 @@ describe('Application Routing', () => {
   });
 
   it('should render NotFoundPage when navigate to unknown route', () => {
+    const store = mockStore({
+      user: { authorizationStatus: AuthorizationStatus.NoAuth, user: null },
+      favorites: { favorites: [], isLoading: false }
+    });
+
     render(
-      <MemoryRouter initialEntries={['/unknown']}>
-        <Routes>
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/unknown']}>
+          <Routes>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
 
     expect(screen.getByText(/404/i)).toBeInTheDocument();

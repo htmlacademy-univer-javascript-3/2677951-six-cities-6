@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
-import { toggleFavorite } from '../../store/action';
+import { FavoriteStatus, toggleFavorite } from '../../store/action';
 import { Offer } from '../../types/offer';
 import { AuthorizationStatus } from '../../constants/auth';
 
@@ -12,8 +12,7 @@ type OfferCardProps = {
 
 function OfferCard({ offer }: OfferCardProps): JSX.Element {
   const { id, title, type, price, rating, isPremium, isFavorite, previewImage } = offer;
-  const ratingWidth = `${(rating / 5) * 100}%`;
-
+  const ratingWidth = `${Math.round(rating) * 20}%`;
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const authorizationStatus = useSelector((state: RootState) => state.user.authorizationStatus);
@@ -24,7 +23,7 @@ function OfferCard({ offer }: OfferCardProps): JSX.Element {
       return;
     }
 
-    const status = isFavorite ? 0 : 1;
+    const status = isFavorite ? FavoriteStatus.Remove : FavoriteStatus.Add;
     dispatch(toggleFavorite({ offerId: id, status }));
   }, [authorizationStatus, isFavorite, id, dispatch, navigate]);
 
@@ -53,17 +52,11 @@ function OfferCard({ offer }: OfferCardProps): JSX.Element {
             <span className="place-card__price-text">/&nbsp;night</span>
           </div>
           <button
-            className={`place-card__bookmark-button button ${
-              isFavorite ? 'place-card__bookmark-button--active' : ''
-            }`}
+            className={`place-card__bookmark-button button ${isFavorite ? 'place-card__bookmark-button--active' : ''}`}
             type="button"
             onClick={handleFavoriteClick}
           >
-            <svg
-              className="place-card__bookmark-icon"
-              width={18}
-              height={19}
-            >
+            <svg className="place-card__bookmark-icon" width={18} height={19}>
               <use xlinkHref="#icon-bookmark" />
             </svg>
             <span className="visually-hidden">
